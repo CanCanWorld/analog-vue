@@ -17,13 +17,13 @@ const jsonWrite = (res, ret) => {
         res.json(ret);
     }
 };
-// GET 请求
-router.post('/getLog', (req, res) => {
-    let sql = $sql.log.get;
-    let params = req.body;
-    console.log(params);
-
-    conn.query(sql,[params.name], (err, result) => {
+// 获取日志中的status
+router.post('/getStatus', (req, res) => {
+    let sql = $sql.log.getStatus;
+    console.log("request: ", "/getStatus")
+    console.log('body: ', req.body)
+    console.log('sql: ', sql)
+    conn.query(sql, [], (err, result) => {
         if (err) {
             console.log(err);
         }
@@ -32,4 +32,30 @@ router.post('/getLog', (req, res) => {
         }
     });
 });
+// 根据status 获取 日志列表
+router.post('/getLogByStatus', (req, res) => {
+    let sql = $sql.log.getLog;
+    console.log("request: ", "/getLogByStatus")
+    console.log('body: ', req.body)
+    const status = req.body.status
+    let result = ""
+    status.forEach((item, index) => {
+        if (index === 0) {
+            result = " where status=" + item
+        } else {
+            result += " or status=" + item
+        }
+    })
+    const targetSql = sql + result
+    console.log('sql: ', targetSql)
+    conn.query(targetSql, [], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        if (result) {
+            jsonWrite(res, result);
+        }
+    });
+});
+
 module.exports = router;
