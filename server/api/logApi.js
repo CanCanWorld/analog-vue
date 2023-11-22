@@ -32,6 +32,25 @@ router.post('/getStatus', (req, res) => {
         }
     });
 });
+// 获取日志中的request
+router.post('/getRequest', (req, res) => {
+    let sql = $sql.log.getRequest;
+    console.log("request: ", "/getRequest")
+    console.log('body: ', req.body)
+    console.log('sql: ', sql)
+    let startTime = req.body.startTime
+    let endTime = req.body.endTime
+    if (startTime === undefined) startTime = '1970-01-01'
+    if (endTime === undefined) endTime = '2099-01-01'
+    conn.query(sql, [startTime, endTime], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        if (result) {
+            jsonWrite(res, result);
+        }
+    });
+});
 // 根据status 获取 日志列表
 router.post('/getLogByStatus', (req, res) => {
     let sql = $sql.log.getLog;
@@ -49,6 +68,25 @@ router.post('/getLogByStatus', (req, res) => {
     const targetSql = sql + result
     console.log('sql: ', targetSql)
     conn.query(targetSql, [], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        if (result) {
+            jsonWrite(res, result);
+        }
+    });
+});
+// 根据日期范围 获取 日志列表
+router.post('/getLogByTime', (req, res) => {
+    let sql = $sql.log.getLog;
+    console.log("request: ", "/getLogByTime")
+    console.log('body: ', req.body)
+    const startTime = req.body.startTime
+    const endTime = req.body.endTime
+    if (startTime !== undefined && endTime !== undefined)
+        sql += " where time_local between '" + startTime + "' and '" + endTime + "'"
+    console.log('sql: ', sql)
+    conn.query(sql, [], (err, result) => {
         if (err) {
             console.log(err);
         }

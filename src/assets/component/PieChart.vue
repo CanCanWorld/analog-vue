@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div id="main" style="width: 600px; height: 400px"></div>
+        <div ref="echart" style="width: 600px; height: 400px"></div>
     </div>
 </template>
 
@@ -16,7 +16,7 @@ export default {
     },
     mounted() {
         // 基于准备好的dom，初始化echarts实例  这个和上面的main对应
-        this.myChart = this.$echarts.init(document.getElementById("main"));
+        this.myChart = this.$echarts.init(this.$refs.echart);
         this.drawChart();
     },
     watch: {

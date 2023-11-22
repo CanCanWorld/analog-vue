@@ -1,5 +1,6 @@
 <template>
     <div id="main-box">
+        请求码：
         <el-select v-model="selectedStatus" multiple placeholder="请选择">
             <el-option
                     v-for="item in status"
@@ -9,61 +10,29 @@
             </el-option>
         </el-select>
         <pie-chart :data="pieData"/>
-        <el-table
-                :data="logs.slice((page-1)*limit, page*limit)"
-                style="width: 100%">
-            <el-table-column
-                    prop="remote_addr"
-                    label="remote_addr"
-                    width="120">
-            </el-table-column>
-            <el-table-column
-                    prop="remote_user"
-                    label="remote_user"
-                    width="120">
-            </el-table-column>
-            <el-table-column
-                    prop="time_local"
-                    :show-overflow-tooltip="true"
-                    label="time_local">
-            </el-table-column>
-            <el-table-column
-                    prop="request"
-                    :show-overflow-tooltip="true"
-                    label="request">
-            </el-table-column>
-            <el-table-column
-                    prop="status"
-                    label="status">
-            </el-table-column>
-            <el-table-column
-                    prop="body_bytes_sent"
-                    label="body_bytes_sent">
-            </el-table-column>
-            <el-table-column
-                    prop="http_referer"
-                    :show-overflow-tooltip="true"
-                    label="http_referer">
-            </el-table-column>
-            <el-table-column
-                    prop="http_user_agent"
-                    :show-overflow-tooltip="true"
-                    label="http_user_agent">
-            </el-table-column>
-            <el-table-column
-                    prop="http_x_forwarded_for"
-                    label="http_x_forwarded_for">
-            </el-table-column>
-        </el-table>
-        <el-pagination
-                background
-                :current-page="page"
-                :page-size="limit"
-                :pager-count="11"
-                layout="prev, pager, next"
-                @current-change="handleCurrentChange"
-                :total="logs.length">
-        </el-pagination>
+        <el-collapse accordion>
+            <el-collapse-item title="详情">
+                <log-table :logs="logsStatus" :page="pageStatus" :limit="limitStatus"/>
+            </el-collapse-item>
+        </el-collapse>
+        请求时间：
+        <el-date-picker
+                v-model="time"
+                type="daterange"
+                align="right"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                unlink-panels
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                @change="timeChange">
+        </el-date-picker>
+        <horizontal-bar-chart :data="barData"/>
+        <el-collapse accordion>
+            <el-collapse-item title="详情">
+                <log-table :logs="logsTime" :page="pageTime" :limit="limitTime"/>
+            </el-collapse-item>
+        </el-collapse>
     </div>
 </template>
 
@@ -71,25 +40,34 @@
 
 import {axiosInstance} from "../network/config";
 import PieChart from "@/assets/component/PieChart.vue";
+import HorizontalBarChart from "@/assets/component/HorizontalBarChart.vue";
+import LogTable from "@/assets/component/LogTable.vue";
 
 export default {
     name: 'App',
-    components: {PieChart},
+    components: {LogTable, HorizontalBarChart, PieChart},
     data() {
         return {
             status: [],
             selectedStatus: [],
             tableData: [],
-            logs: [],
-            limit: 10,
-            page: 1,
+            logsStatus: [],
+            limitStatus: 10,
+            pageStatus: 1,
+            logsTime: [],
+            limitTime: 10,
+            pageTime: 1,
             pieData: [],
-            statusList: []
+            barData: [],
+            statusList: [],
+            time: '',
         }
     },
     mounted() {
-        this.getLogByStatus()
         this.getStatus()
+        this.getRequest()
+        this.getLogByStatus()
+        this.getLogByTime()
     },
     watch: {
         selectedStatus() {
@@ -110,8 +88,9 @@ export default {
         }
     },
     methods: {
-        handleCurrentChange(page) {
-            this.page = page;
+        timeChange() {
+            this.getLogByTime()
+            this.getRequest()
         },
         getStatus() {
             axiosInstance.post("/log/getStatus", {})
@@ -129,13 +108,43 @@ export default {
                     })
                 })
         },
-        getLogByStatus() {
-            axiosInstance.post("/log/getLogByStatus", {
-                status: this.selectedStatus
+        getRequest() {
+            axiosInstance.post("/log/getRequest", {
+                startTime: this.time[0],
+                endTime: this.time[1]
             })
                 .then((res) => {
-                    this.logs = []
-                    this.logs.push(...res.data)
+                    console.log(res)
+                    this.barData = []
+                    let request = []
+                    let count = []
+                    res.data.slice(0, 10).forEach((item) => {
+                        request.push(item.request)
+                        count.push(item.count)
+                    })
+                    this.barData = {
+                        yAxis: request.reverse(),
+                        series: count.reverse()
+                    }
+                })
+        },
+        getLogByStatus() {
+            axiosInstance.post("/log/getLogByStatus", {
+                status: this.selectedStatus,
+            })
+                .then((res) => {
+                    this.logsStatus = []
+                    this.logsStatus.push(...res.data)
+                })
+        },
+        getLogByTime() {
+            axiosInstance.post("/log/getLogByTime", {
+                startTime: this.time[0],
+                endTime: this.time[1]
+            })
+                .then((res) => {
+                    this.logsTime = []
+                    this.logsTime.push(...res.data)
                 })
         },
     }
