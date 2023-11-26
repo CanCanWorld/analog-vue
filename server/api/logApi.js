@@ -32,6 +32,21 @@ router.post('/getStatus', (req, res) => {
         }
     });
 });
+// 获取日志中的normal
+router.post('/getNormal', (req, res) => {
+    let sql = $sql.log.getNormal;
+    console.log("request: ", "/getNormal")
+    console.log('body: ', req.body)
+    console.log('sql: ', sql)
+    conn.query(sql, [], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        if (result) {
+            jsonWrite(res, result);
+        }
+    });
+});
 // 获取日志中的request
 router.post('/getRequest', (req, res) => {
     let sql = $sql.log.getRequest;
@@ -87,6 +102,56 @@ router.post('/getLogByTime', (req, res) => {
         sql += " where time_local between '" + startTime + "' and '" + endTime + "'"
     console.log('sql: ', sql)
     conn.query(sql, [], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        if (result) {
+            jsonWrite(res, result);
+        }
+    });
+});
+// 根据normal 获取 日志列表
+router.post('/getLogByNormal', (req, res) => {
+    let sql = $sql.log.getLog;
+    console.log("request: ", "/getLogByNormal")
+    console.log('body: ', req.body)
+    const normal = req.body.normal
+    let result = ""
+    normal.forEach((item, index) => {
+        if (index === 0) {
+            result = " where normal=" + item
+        } else {
+            result += " or normal=" + item
+        }
+    })
+    const targetSql = sql + result
+    console.log('sql: ', targetSql)
+    conn.query(targetSql, [], (err, result) => {
+        if (err) {
+            console.log(err);
+        }
+        if (result) {
+            jsonWrite(res, result);
+        }
+    });
+});
+// 根据 安全类型 获取 日志列表
+router.post('/getLogBySafeType', (req, res) => {
+    let sql = $sql.log.getLog;
+    console.log("request: ", "/getLogBySafeType")
+    console.log('body: ', req.body)
+    const type = req.body.type
+    let result = ""
+    type.forEach((item, index) => {
+        if (index === 0) {
+            result = " where " + item + "=1"
+        } else {
+            result += " or " + item + "=1"
+        }
+    })
+    const targetSql = sql + result
+    console.log('sql: ', targetSql)
+    conn.query(targetSql, [], (err, result) => {
         if (err) {
             console.log(err);
         }
